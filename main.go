@@ -56,11 +56,9 @@ func fetchData(client *loggly.ClientType) {
 	req.Header.Set("Accep-Encoding", "gzip, deflate")
 	req.Header.Set("Connection", "keep-alive")
 
-	//req.Header.Set("Connection")
 	resp, err := c.Do(req)
 	if err != nil {
 		client.EchoSend("error", "error making request")
-		fmt.Printf("Error", err)
 		return
 	}
 	defer resp.Body.Close()
@@ -68,14 +66,12 @@ func fetchData(client *loggly.ClientType) {
 	if err != nil {
 		client.EchoSend("error", "error reading body")
 	}
-	fmt.Printf(string(body) + "\n")
 
 	var response TotalResponse
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		client.EchoSend("error", "error decoding data")
-		fmt.Printf("Error", err)
 	}
 	for _, child := range response.Data.Children {
 		comment := child.Data
