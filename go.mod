@@ -1,6 +1,6 @@
 module main.go
 
-go 1.23.1
+go 1.20
 
 require github.com/jamespearly/loggly v0.0.0-20220929110912-1d839b0715fa
 
