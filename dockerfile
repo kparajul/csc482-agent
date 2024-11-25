@@ -1,7 +1,31 @@
-FROM golang:1.20-alpine AS build
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
+# Start the Go app build
+FROM golang:latest AS build
+
+# Copy source
+WORKDIR /go/src/agent-code
 COPY . .
-RUN go build -o csc482-agent .
-CMD [ "/app/csc482-agent"]
+
+# Get required modules
+RUN go mod tidy
+
+# Build a statically-linked Go binary for Linux
+RUN CGO_ENABLED=0 GOOS=linux go build -a -o main .
+
+# New build phase -- create binary-only image
+FROM alpine:latest
+
+# Add support for HTTPS
+RUN apk update && \
+    apk upgrade && \
+    apk add ca-certificates
+
+WORKDIR /root/
+
+# Copy files from previous build container
+COPY --from=build /go/src/agent-code/main ./
+
+# Check results
+RUN env && pwd && find .
+
+# Start the application
+CMD ["./main"]
