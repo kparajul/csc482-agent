@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -14,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	loggly "github.com/jamespearly/loggly"
-	"github.com/joho/godotenv"
 )
 
 type TotalResponse struct {
@@ -41,11 +39,6 @@ type RequiredResponse struct {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	logglyToken := os.Getenv("LOGGLY_TOKEN")
 	client := loggly.New(logglyToken)
 	ticker := time.NewTicker(1 * time.Minute)
