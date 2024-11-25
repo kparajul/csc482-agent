@@ -57,7 +57,7 @@ func fetchData(client *loggly.ClientType) {
 		return
 	}
 	req.Header.Set("Host", "www.reddit.com")
-	req.Header.Set("User-Agent", "kritika/1.0 by Key_Excuse_5158")
+	req.Header.Set("User-Agent", "Comments-Display by Key_Excuse_5158")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Accep-Encoding", "gzip, deflate")
 	req.Header.Set("Connection", "keep-alive")
@@ -93,8 +93,6 @@ func fetchData(client *loggly.ClientType) {
 	client.EchoSend("info", fmt.Sprintf("Number of comments pulled: %d", size))
 	for _, child := range response.Data.Children {
 		comment := child.Data
-		fmt.Printf("\n Fetched comments: Id: %s, author: %s, body: %s, score: %d \n", comment.Id, comment.Author, comment.Body, comment.Score)
-
 		item := RequiredResponse{
 			Id:     comment.Id,
 			Author: comment.Author,
