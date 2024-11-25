@@ -72,6 +72,11 @@ func fetchData(client *loggly.ClientType) {
 	if err != nil {
 		client.EchoSend("error", "error reading body")
 	}
+	if resp.StatusCode != http.StatusOK {
+		client.EchoSend("error", fmt.Sprintf("Unexpected status code: %d", resp.StatusCode))
+		return
+	}
+	client.EchoSend("debug", fmt.Sprintf("Size: %d", len(body)))
 
 	var response TotalResponse
 
