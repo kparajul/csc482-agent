@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -40,27 +43,66 @@ type RequiredResponse struct {
 
 func main() {
 	logglyToken := os.Getenv("LOGGLY_TOKEN")
+	clientID := os.Getenv("REDDIT_CLIENT-ID")
+	clientSecret := os.Getenv("REDDIT_CLIENT_SECRET")
 	client := loggly.New(logglyToken)
+	accessToken, err := getAccessToken(clientID, clientSecret)
+	if err != nil {
+		client.EchoSend("Error ", "Access token error")
+	}
 	ticker := time.NewTicker(1 * time.Minute)
-	fetchData(client)
+	fetchData(client, accessToken)
 
 	for range ticker.C {
-		fetchData(client)
+		fetchData(client, accessToken)
 	}
 }
 
-func fetchData(client *loggly.ClientType) {
+func getAccessToken(clientID, clientSecret string) (string, error) {
+	auth := base64.StdEncoding.EncodeToString([]byte(clientID + ":" + clientSecret))
+	data := url.Values{}
+	data.Set("grant_type", "client_credentials")
+
+	req, err := http.NewRequest("POST", "https://www.reddit.com/api/v1/access_token", strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Basic "+auth)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", "kritika/1.0 (by Key_Excuse_5158)")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, er := client.Do(req)
+
+	if er != nil {
+		return "", er
+	}
+
+	defer resp.Body.Close()
+
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", err
+	}
+
+	accessToken, ok := result["access_token"].(string)
+
+	if !ok {
+		return "", fmt.Errorf("failed to retrieve access token")
+	}
+
+	return accessToken, nil
+}
+
+func fetchData(client *loggly.ClientType, accessToken string) {
 	c := http.Client{Timeout: time.Duration(15) * time.Second}
 	req, err := http.NewRequest("GET", "http://www.reddit.com/r/all/comments.json?limit=20", nil)
 	if err != nil {
 		client.EchoSend("error", "error creating request")
 		return
 	}
-	req.Header.Set("Host", "www.reddit.com")
+	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("User-Agent", "Comments-Display by Key_Excuse_5158")
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Accep-Encoding", "gzip, deflate")
-	req.Header.Set("Connection", "keep-alive")
 
 	resp, err := c.Do(req)
 	if err != nil {
