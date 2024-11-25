@@ -50,7 +50,7 @@ func main() {
 	if err != nil {
 		client.EchoSend("Error ", "Access token error")
 	}
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(5 * time.Minute)
 	fetchData(client, accessToken)
 
 	for range ticker.C {
@@ -164,8 +164,6 @@ func fetchData(client *loggly.ClientType, accessToken string) {
 			client.EchoSend("error", fmt.Sprintf("Error during putItem %s", err))
 			return
 		}
-
-		client.EchoSend("info", "Successful adding to dynamoDB")
 
 	}
 
